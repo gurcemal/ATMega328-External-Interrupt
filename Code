@@ -1,0 +1,28 @@
+
+#define button 2  // port d bit 2 (D2)
+#define led0 0    // port b bit 0 (D8)
+#define led1 1    // port b bit 1 (D9)
+
+uint8_t portB_value = 0b00000000;
+
+void setup() {
+  DDRB |= ((1 << led0) | (1 << led1));    // set DDRB register's led bits one for leds
+  DDRD &= (~(1 << button));               // set DDRD register's button bit zero for button
+  EICRA = 0b00000001;                     // set EICRA register's ISC01 and ISC00 bits one for the rising edge of INT0 generates an interrupt request.
+  EIMSK  |= (1 << INT0);                  // set EIMSK register's INT0 bit one to make the external pin interrupt is enabled
+  sei();                                  // set Global Interrupt Enable
+}
+
+void loop() {
+  portB_value  |= (1 << led0);            // set led1 pin high
+  portB_value &= (~(1 << led1));          // set led0 pin low
+  PORTB = portB_value;
+  delay(5000);
+}
+
+ISR(INT0_vect) {
+  cli();                                  // Turn off global interrupt
+  portB_value = ~ portB_value;
+  PORTB = portB_value;
+  sei();                                  // set Global Interrupt Enable
+}
